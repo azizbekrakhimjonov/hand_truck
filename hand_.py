@@ -1,23 +1,41 @@
+finger size 
+
 import cv2
 import mediapipe as mp
+import time
+import math
 
 cap = cv2.VideoCapture(0)
-mpHands = mp.solutions.hands
-hands = mpHands.Hands()
-mpDraw = mp.solutions.drawing_utils
-while True:
-    success, image = cap.read()
-    imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = hands.process(imageRGB)
-    # checking whether a hand is detected
-    if results.multi_hand_landmarks:
-        for handLms in results.multi_hand_landmarks:  # working with each hand
-            for id, lm in enumerate(handLms.landmark):
-                h, w, c = image.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                if id == 8:
-                    cv2.circle(image, (cx, cy), 25, (255, 0, 255), cv2.FILLED)
 
-                mpDraw.draw_landmarks(image, handLms, mpHands.HAND_CONNECTIONS)
-                cv2.imshow("Output", image)
-                cv2.waitKey(1)
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands()
+mp_draw = mp.solutions.drawing_utils
+
+while True:
+    _, img = cap.read()
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = hands.process(imgRGB)
+
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            for lm in hand_landmarks.landmark:
+                height, width, channel = img.shape
+                cx, cy = int(lm.x * width), int(lm.y * height)
+                cv2.circle(img, (cx, cy), 10, (255, 0, 255), cv2.FILLED)
+            mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+            index_finger = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+            thumb_finger = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+
+            distance = math.sqrt((index_finger.x - thumb_finger.x) ** 2 + (index_finger.y - thumb_finger.y) ** 2)
+
+            max_distance = 0.2 
+            volume = int(distance / max_distance * 100)
+            print("Volume:", volume)  
+
+    cv2.imshow("Image", img)
+    try:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    except:
+        exit()
