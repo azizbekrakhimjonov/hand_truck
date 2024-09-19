@@ -1,4 +1,4 @@
-finger size 
+# finger size
 
 import cv2
 import mediapipe as mp
