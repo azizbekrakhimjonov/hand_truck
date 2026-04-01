@@ -4,12 +4,15 @@ import cv2
 import mediapipe as mp
 import time
 import math
+import subprocess
 
 cap = cv2.VideoCapture(0)
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
 mp_draw = mp.solutions.drawing_utils
+
+last_volume = -1
 
 while True:
     _, img = cap.read()
@@ -31,7 +34,20 @@ while True:
 
             max_distance = 0.2 
             volume = int(distance / max_distance * 100)
-            print("Volume:", volume)  
+            
+            # Ovoz diapazonini 0-100 orasida cheklash
+            volume = max(0, min(100, volume))
+
+            # Agar ovoz oldingisidan kamida 2 ga o'zgargan bo'lsa komanda bering 
+            # (video qotib qolmasligi uchun)
+            if abs(volume - last_volume) > 2:
+                print("Volume:", volume)  
+                try:
+                    # Mac OS uchun ovoz o'zgartirish
+                    subprocess.run(["osascript", "-e", f"set volume output volume {volume}"])
+                    last_volume = volume
+                except Exception as e:
+                    print("Error:", e)
 
     cv2.imshow("Image", img)
     try:
